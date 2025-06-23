@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe AI - Cross-Platform Demo</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        /* Import shared design system */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .app-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .title {
+            font-size: 40px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: #667eea;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .shared-lib-note {
+            color: #28a745;
+            font-size: 14px;
+            font-weight: 600;
+            background: #d4edda;
+            padding: 10px 15px;
+            border-radius: 25px;
+            display: inline-block;
+            margin-bottom: 30px;
+        }
+
+        .difficulty-container {
+            margin-bottom: 30px;
+        }
+
+        .difficulty-label {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .difficulty-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .difficulty-button {
+            padding: 10px 20px;
+            border-radius: 25px;
+            border: 2px solid;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .difficulty-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .difficulty-button.active {
+            color: white !important;
+        }
+
+        .difficulty-button.easy {
+            border-color: #4CAF50;
+            color: #4CAF50;
+        }
+
+        .difficulty-button.easy.active {
+            background-color: #4CAF50;
+        }
+
+        .difficulty-button.medium {
+            border-color: #FF9800;
+            color: #FF9800;
+        }
+
+        .difficulty-button.medium.active {
+            background-color: #FF9800;
+        }
+
+        .difficulty-button.hard {
+            border-color: #F44336;
+            color: #F44336;
+        }
+
+        .difficulty-button.hard.active {
+            background-color: #F44336;
+        }
+
+        .board-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .board {
+            width: 300px;
+            height: 300px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 3px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        }
+
+        .cell {
+            background: #f8f9fa;
+            border: none;
+            font-size: 48px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 5px;
+        }
+
+        .cell:hover:not(:disabled) {
+            background: #e9ecef;
+            transform: scale(1.05);
+        }
+
+        .cell:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .cell.filled {
+            background: #ffffff;
+        }
+
+        .cell.x {
+            color: #2196F3;
+        }
+
+        .cell.o {
+            color: #F44336;
+        }
+
+        .game-status {
+            margin-bottom: 30px;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .status-text {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .status-text.won {
+            color: #4CAF50;
+        }
+
+        .status-text.draw {
+            color: #FF9800;
+        }
+
+        .stats {
+            margin-bottom: 30px;
+        }
+
+        .stats-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            font-size: 16px;
+            color: #666;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .button {
+            padding: 15px 25px;
+            border-radius: 25px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .button.new-game {
+            background: #2196F3;
+        }
+
+        .button.reset-stats {
+            background: #FF9800;
+        }
+
+        .info-panel {
+            background: #e7f3ff;
+            border: 1px solid #bee5eb;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .info-panel h3 {
+            margin: 0 0 15px 0;
+            color: #0c5460;
+            text-align: center;
+        }
+
+        .info-panel ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .info-panel li {
+            margin: 8px 0;
+            color: #0c5460;
+        }
+
+        .info-panel code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 600px) {
+            .app-container {
+                padding: 20px;
+                margin: 20px;
+            }
+            
+            .board {
+                width: 250px;
+                height: 250px;
+            }
+            
+            .cell {
+                font-size: 2.5rem;
+            }
+            
+            .title {
+                font-size: 2rem;
+            }
+
+            .info-panel {
+                text-align: center;
+            }
+
+            .info-panel ul {
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // ==============================================
+        // SHARED DESIGN SYSTEM (matches React Native)
+        // ==============================================
+        
+        const COLORS = {
+            gradientStart: '#667eea',
+            gradientEnd: '#764ba2',
+            difficulty: {
+                easy: '#4CAF50',
+                medium: '#FF9800',
+                hard: '#F44336',
+            },
+            player: {
+                X: '#2196F3',
+                O: '#F44336',
+            },
+            status: {
+                won: '#4CAF50',
+                draw: '#FF9800',
+                info: '#28a745',
+                infoBg: '#d4edda',
+            },
+            button: {
+                primary: '#2196F3',
+                secondary: '#FF9800',
+            },
+        };
+
+        // ==============================================
+        // SHARED GAME LOGIC (identical to React Native)
+        // ==============================================
+        
+        const WINNING_COMBINATIONS = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+            [0, 4, 8], [2, 4, 6] // diagonals
+        ];
+
+        const DIFFICULTY_SETTINGS = {
+            easy: { optimalMoveChance: 0.3 },
+            medium: { optimalMoveChance: 0.7 },
+            hard: { optimalMoveChance: 1.0 }
+        };
+
+        // Core game logic functions
+        const checkWinner = (board) => {
+            for (const combination of WINNING_COMBINATIONS) {
+                const [a, b, c] = combination;
+                if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+                    return board[a];
+                }
+            }
+            return null;
+        };
+
+        const isBoardFull = (board) => board.every(cell => cell !== null);
+
+        const getAvailableMoves = (board) =>
+            board.map((cell, index) => cell === null ? index : null)
+                 .filter(move => move !== null);
+
+        // Minimax algorithm with alpha-beta pruning
+        const minimax = (board, depth, isMaximizing, alpha = -Infinity, beta = Infinity) => {
+            const winner = checkWinner(board);
+            
+            if (winner === 'O') return 10 - depth;
+            if (winner === 'X') return depth - 10;
+            if (isBoardFull(board)) return 0;
+
+            if (isMaximizing) {
+                let maxEval = -Infinity;
+                for (const move of getAvailableMoves(board)) {
+                    const newBoard = [...board];
+                    newBoard[move] = 'O';
+                    const evaluation = minimax(newBoard, depth + 1, false, alpha, beta);
+                    maxEval = Math.max(maxEval, evaluation);
+                    alpha = Math.max(alpha, evaluation);
+                    if (beta <= alpha) break; // Alpha-beta pruning
+                }
+                return maxEval;
+            } else {
+                let minEval = Infinity;
+                for (const move of getAvailableMoves(board)) {
+                    const newBoard = [...board];
+                    newBoard[move] = 'X';
+                    const evaluation = minimax(newBoard, depth + 1, true, alpha, beta);
+                    minEval = Math.min(minEval, evaluation);
+                    beta = Math.min(beta, evaluation);
+                    if (beta <= alpha) break; // Alpha-beta pruning
+                }
+                return minEval;
+            }
+        };
+
+        const getBestMove = (board) => {
+            const availableMoves = getAvailableMoves(board);
+            let bestMove = availableMoves[0];
+            let bestScore = -Infinity;
+            
+            for (const move of availableMoves) {
+                const newBoard = [...board];
+                newBoard[move] = 'O';
+                const score = minimax(newBoard, 0, false);
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+                }
+            }
+            return bestMove;
+        };
+
+        const getRandomMove = (board) => {
+            const availableMoves = getAvailableMoves(board);
+            return availableMoves[Math.floor(Math.random() * availableMoves.length)];
+        };
+
+        const getAIMove = (board, difficulty) => {
+            const { optimalMoveChance } = DIFFICULTY_SETTINGS[difficulty];
+            const shouldUseOptimalMove = Math.random() < optimalMoveChance;
+            return shouldUseOptimalMove ? getBestMove(board) : getRandomMove(board);
+        };
+
+        // ==============================================
+        // REACT COMPONENT (same structure as React Native)
+        // ==============================================
+
+        const TicTacToeApp = () => {
+            const [board, setBoard] = useState(Array(9).fill(null));
+            const [isPlayerTurn, setIsPlayerTurn] = useState(true);
+            const [gameState, setGameState] = useState('playing');
+            const [winner, setWinner] = useState(null);
+            const [difficulty, setDifficulty] = useState('medium');
+            const [stats, setStats] = useState({ playerWins: 0, aiWins: 0, draws: 0 });
+            const [isProcessingAI, setIsProcessingAI] = useState(false);
+
+            const handleCellPress = (index) => {
+                if (board[index] || gameState !== 'playing' || !isPlayerTurn || isProcessingAI) return;
+
+                const newBoard = [...board];
+                newBoard[index] = 'X';
+                setBoard(newBoard);
+                setIsPlayerTurn(false);
+
+                const gameWinner = checkWinner(newBoard);
+                if (gameWinner) {
+                    setWinner(gameWinner);
+                    setGameState('won');
+                    setStats(prev => ({ ...prev, playerWins: prev.playerWins + 1 }));
+                } else if (isBoardFull(newBoard)) {
+                    setGameState('draw');
+                    setStats(prev => ({ ...prev, draws: prev.draws + 1 }));
+                } else {
+                    setIsProcessingAI(true);
+                }
+            };
+
+            useEffect(() => {
+                if (!isPlayerTurn && gameState === 'playing' && isProcessingAI) {
+                    const timer = setTimeout(() => {
+                        const aiMove = getAIMove(board, difficulty);
+                        const newBoard = [...board];
+                        newBoard[aiMove] = 'O';
+                        setBoard(newBoard);
+                        setIsPlayerTurn(true);
+                        setIsProcessingAI(false);
+
+                        const gameWinner = checkWinner(newBoard);
+                        if (gameWinner) {
+                            setWinner(gameWinner);
+                            setGameState('won');
+                            setStats(prev => ({ ...prev, aiWins: prev.aiWins + 1 }));
+                        } else if (isBoardFull(newBoard)) {
+                            setGameState('draw');
+                            setStats(prev => ({ ...prev, draws: prev.draws + 1 }));
+                        }
+                    }, 500);
+
+                    return () => clearTimeout(timer);
+                }
+            }, [board, isPlayerTurn, gameState, difficulty, isProcessingAI]);
+
+            const handleDifficultyChange = (newDifficulty) => {
+                setDifficulty(newDifficulty);
+                handleNewGame();
+            };
+
+            const handleNewGame = () => {
+                setBoard(Array(9).fill(null));
+                setIsPlayerTurn(true);
+                setGameState('playing');
+                setWinner(null);
+                setIsProcessingAI(false);
+            };
+
+            const handleResetStats = () => {
+                setStats({ playerWins: 0, aiWins: 0, draws: 0 });
+            };
+
+            const renderCell = (index) => {
+                const cellValue = board[index];
+                return (
+                    <button
+                        key={index}
+                        className={`cell ${cellValue ? 'filled' : ''} ${cellValue ? cellValue.toLowerCase() : ''}`}
+                        onClick={() => handleCellPress(index)}
+                        disabled={!isPlayerTurn || gameState !== 'playing' || isProcessingAI}
+                    >
+                        {cellValue}
+                    </button>
+                );
+            };
+
+            const renderStatusText = () => {
+                if (gameState === 'playing') {
+                    if (isProcessingAI) {
+                        return <div className="status-text">AI is thinking...</div>;
+                    } else {
+                        return <div className="status-text">{isPlayerTurn ? "Your turn" : "Waiting..."}</div>;
+                    }
+                } else if (gameState === 'won') {
+                    return (
+                        <div className="status-text won">
+                            {winner === 'X' ? '🎉 You Won!' : '🤖 AI Won!'}
+                        </div>
+                    );
+                } else if (gameState === 'draw') {
+                    return <div className="status-text draw">🤝 It's a Draw!</div>;
+                }
+                return null;
+            };
+
+            return (
+                <div className="app-container">
+                    <h1 className="title">Tic Tac Toe AI</h1>
+                    <p className="subtitle">Cross-Platform Demo</p>
+                    <div className="shared-lib-note">
+                        ✨ Same Logic as React Native App
+                    </div>
+
+                    <div className="difficulty-container">
+                        <div className="difficulty-label">Difficulty:</div>
+                        <div className="difficulty-buttons">
+                            {['easy', 'medium', 'hard'].map((level) => (
+                                <button
+                                    key={level}
+                                    className={`difficulty-button ${level} ${difficulty === level ? 'active' : ''}`}
+                                    onClick={() => handleDifficultyChange(level)}
+                                >
+                                    {level.charAt(0).toUpperCase() + level.slice(1)}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="board-container">
+                        <div className="board">
+                            {board.map((_, index) => renderCell(index))}
+                        </div>
+                    </div>
+
+                    <div className="game-status">
+                        {renderStatusText()}
+                    </div>
+
+                    <div className="stats">
+                        <div className="stats-title">Statistics</div>
+                        <div className="stats-row">
+                            <span>You: {stats.playerWins}</span>
+                            <span>AI: {stats.aiWins}</span>
+                            <span>Draws: {stats.draws}</span>
+                        </div>
+                    </div>
+
+                    <div className="buttons">
+                        <button className="button new-game" onClick={handleNewGame}>
+                            New Game
+                        </button>
+                        <button className="button reset-stats" onClick={handleResetStats}>
+                            Reset Stats
+                        </button>
+                    </div>
+
+                    <div className="info-panel">
+                        <h3>🚀 Shared TypeScript Library Demo</h3>
+                        <ul>
+                            <li><strong>Same Core Logic:</strong> This web app uses identical game logic as the React Native mobile app</li>
+                            <li><strong>Shared Design System:</strong> Colors, dimensions, and styling match the mobile app</li>
+                            <li><strong>Minimax AI:</strong> Advanced AI with alpha-beta pruning optimization</li>
+                            <li><strong>Difficulty Levels:</strong> Easy (30%), Medium (70%), Hard (100% optimal moves)</li>
+                            <li><strong>Cross-Platform:</strong> <code>import &#123; TicTacToeGame &#125; from './src/lib'</code></li>
+                            <li><strong>Type Safety:</strong> Full TypeScript support with shared interfaces</li>
+                        </ul>
+                    </div>
+                </div>
+            );
+        };
+
+        // Render the app
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<TicTacToeApp />);
+    </script>
+</body>
+</html> 
