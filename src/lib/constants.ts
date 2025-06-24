@@ -1,15 +1,71 @@
-export const WINNING_COMBINATIONS = [
-  [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
-  [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
-  [0, 4, 8], [2, 4, 6] // diagonals
-] as const;
+// Board configuration - easily scalable to NxN
+export const BOARD_DIMENSIONS = 3; // Change this to support 4x4, 5x5, etc.
+export const BOARD_SIZE = BOARD_DIMENSIONS * BOARD_DIMENSIONS;
 
-export const BOARD_SIZE = 9;
+/**
+ * Generate winning combinations dynamically for any NxN board
+ * This scales automatically with BOARD_DIMENSIONS
+ */
+const generateWinningCombinations = (n: number): number[][] => {
+  const combinations: number[][] = [];
+  
+  // Generate rows
+  for (let row = 0; row < n; row++) {
+    const rowCombination: number[] = [];
+    for (let col = 0; col < n; col++) {
+      rowCombination.push(row * n + col);
+    }
+    combinations.push(rowCombination);
+  }
+  
+  // Generate columns
+  for (let col = 0; col < n; col++) {
+    const colCombination: number[] = [];
+    for (let row = 0; row < n; row++) {
+      colCombination.push(row * n + col);
+    }
+    combinations.push(colCombination);
+  }
+  
+  // Generate main diagonal (top-left to bottom-right)
+  const mainDiagonal: number[] = [];
+  for (let i = 0; i < n; i++) {
+    mainDiagonal.push(i * n + i);
+  }
+  combinations.push(mainDiagonal);
+  
+  // Generate anti-diagonal (top-right to bottom-left)
+  const antiDiagonal: number[] = [];
+  for (let i = 0; i < n; i++) {
+    antiDiagonal.push(i * n + (n - 1 - i));
+  }
+  combinations.push(antiDiagonal);
+  
+  return combinations;
+};
 
-export const DIFFICULTY_SETTINGS = {
-  easy: { optimalMoveChance: 0.3 },
-  medium: { optimalMoveChance: 0.7 },
-  hard: { optimalMoveChance: 1.0 }
+export const WINNING_COMBINATIONS = generateWinningCombinations(BOARD_DIMENSIONS);
+
+/**
+ * Consolidated difficulty settings with descriptions
+ * This replaces both difficultyConfig and DIFFICULTY_SETTINGS
+ */
+export const DIFFICULTY_CONFIG = {
+  easy: { 
+    optimalChance: 0.3, 
+    description: 'AI makes optimal moves 30% of the time',
+    baseScore: 100 // Used for dynamic minimax scoring
+  },
+  medium: { 
+    optimalChance: 0.7, 
+    description: 'AI makes optimal moves 70% of the time',
+    baseScore: 100
+  },
+  hard: { 
+    optimalChance: 1.0, 
+    description: 'AI always makes optimal moves',
+    baseScore: 100
+  }
 } as const;
 
 export const DIFFICULTY_COLORS = {

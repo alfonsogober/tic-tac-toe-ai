@@ -1,20 +1,12 @@
 import * as R from 'ramda';
 import { getBestMove, getRandomMove } from './gameLogic';
 import { Board, Player, Difficulty } from './types';
-
-/**
- * Difficulty level configurations using functional approach
- */
-const difficultyConfig = {
-  easy: { optimalChance: 0.3, description: 'AI makes optimal moves 30% of the time' },
-  medium: { optimalChance: 0.7, description: 'AI makes optimal moves 70% of the time' },
-  hard: { optimalChance: 1.0, description: 'AI always makes optimal moves' }
-};
+import { DIFFICULTY_CONFIG } from './constants';
 
 /**
  * Get difficulty configuration using functional composition
  */
-const getDifficultyConfig = R.prop(R.__, difficultyConfig);
+const getDifficultyConfig = R.prop(R.__, DIFFICULTY_CONFIG);
 
 /**
  * Check if AI should make optimal move based on difficulty
@@ -70,12 +62,12 @@ export const parseDifficulty = R.cond([
 /**
  * Validate difficulty level using functional composition
  */
-export const isValidDifficulty = R.includes(R.__, Object.keys(difficultyConfig));
+export const isValidDifficulty = R.includes(R.__, Object.keys(DIFFICULTY_CONFIG));
 
 /**
  * Get all available difficulty levels using functional approach
  */
-export const getDifficultyLevels = (): Difficulty[] => Object.keys(difficultyConfig) as Difficulty[];
+export const getDifficultyLevels = (): Difficulty[] => Object.keys(DIFFICULTY_CONFIG) as Difficulty[];
 
 /**
  * Get optimal move chance for difficulty using functional composition

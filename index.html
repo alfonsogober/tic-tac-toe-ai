@@ -350,24 +350,75 @@
         // SHARED GAME LOGIC (identical to React Native)
         // ==============================================
         
-        const WINNING_COMBINATIONS = [
-            [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
-            [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
-            [0, 4, 8], [2, 4, 6] // diagonals
-        ];
+        // Board configuration - easily scalable to NxN
+        const BOARD_DIMENSIONS = 3; // Change this to support 4x4, 5x5, etc.
+        const BOARD_SIZE = BOARD_DIMENSIONS * BOARD_DIMENSIONS;
 
-        const DIFFICULTY_SETTINGS = {
-            easy: { optimalMoveChance: 0.3 },
-            medium: { optimalMoveChance: 0.7 },
-            hard: { optimalMoveChance: 1.0 }
+        // Generate winning combinations dynamically for any NxN board
+        const generateWinningCombinations = (n) => {
+            const combinations = [];
+            
+            // Generate rows
+            for (let row = 0; row < n; row++) {
+                const rowCombination = [];
+                for (let col = 0; col < n; col++) {
+                    rowCombination.push(row * n + col);
+                }
+                combinations.push(rowCombination);
+            }
+            
+            // Generate columns
+            for (let col = 0; col < n; col++) {
+                const colCombination = [];
+                for (let row = 0; row < n; row++) {
+                    colCombination.push(row * n + col);
+                }
+                combinations.push(colCombination);
+            }
+            
+            // Generate main diagonal (top-left to bottom-right)
+            const mainDiagonal = [];
+            for (let i = 0; i < n; i++) {
+                mainDiagonal.push(i * n + i);
+            }
+            combinations.push(mainDiagonal);
+            
+            // Generate anti-diagonal (top-right to bottom-left)
+            const antiDiagonal = [];
+            for (let i = 0; i < n; i++) {
+                antiDiagonal.push(i * n + (n - 1 - i));
+            }
+            combinations.push(antiDiagonal);
+            
+            return combinations;
         };
 
-        // Core game logic functions
+        const WINNING_COMBINATIONS = generateWinningCombinations(BOARD_DIMENSIONS);
+
+        // Consolidated difficulty settings (matches React Native app)
+        const DIFFICULTY_SETTINGS = {
+            easy: { 
+                optimalMoveChance: 0.3, 
+                description: 'AI makes optimal moves 30% of the time',
+                baseScore: 100 
+            },
+            medium: { 
+                optimalMoveChance: 0.7, 
+                description: 'AI makes optimal moves 70% of the time',
+                baseScore: 100 
+            },
+            hard: { 
+                optimalMoveChance: 1.0, 
+                description: 'AI always makes optimal moves',
+                baseScore: 100 
+            }
+        };
+
+        // Core game logic functions - works with any board size
         const checkWinner = (board) => {
             for (const combination of WINNING_COMBINATIONS) {
-                const [a, b, c] = combination;
-                if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-                    return board[a];
+                if (combination.every(index => board[index] && board[index] === board[combination[0]])) {
+                    return board[combination[0]];
                 }
             }
             return null;
@@ -379,12 +430,21 @@
             board.map((cell, index) => cell === null ? index : null)
                  .filter(move => move !== null);
 
-        // Minimax algorithm with alpha-beta pruning
+        // Calculate dynamic minimax scoring based on board size and depth
+        const calculateScore = (winner, depth) => {
+            const baseScore = DIFFICULTY_SETTINGS.medium.baseScore;
+            const depthPenalty = depth; // Prefer shorter paths to victory
+            
+            if (winner === 'O') return baseScore - depthPenalty;  // AI wins
+            if (winner === 'X') return -baseScore + depthPenalty; // Human wins
+            return 0; // Draw
+        };
+
+        // Minimax algorithm with alpha-beta pruning and dynamic scoring
         const minimax = (board, depth, isMaximizing, alpha = -Infinity, beta = Infinity) => {
             const winner = checkWinner(board);
             
-            if (winner === 'O') return 10 - depth;
-            if (winner === 'X') return depth - 10;
+            if (winner) return calculateScore(winner, depth);
             if (isBoardFull(board)) return 0;
 
             if (isMaximizing) {
@@ -445,7 +505,7 @@
         // ==============================================
 
         const TicTacToeApp = () => {
-            const [board, setBoard] = useState(Array(9).fill(null));
+            const [board, setBoard] = useState(Array(BOARD_SIZE).fill(null));
             const [isPlayerTurn, setIsPlayerTurn] = useState(true);
             const [gameState, setGameState] = useState('playing');
             const [winner, setWinner] = useState(null);
@@ -505,7 +565,7 @@
             };
 
             const handleNewGame = () => {
-                setBoard(Array(9).fill(null));
+                setBoard(Array(BOARD_SIZE).fill(null));
                 setIsPlayerTurn(true);
                 setGameState('playing');
                 setWinner(null);

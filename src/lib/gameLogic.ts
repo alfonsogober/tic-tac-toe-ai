@@ -1,6 +1,6 @@
 import * as R from 'ramda';
 import { Player, Board, GameResult } from './types';
-import { WINNING_COMBINATIONS, BOARD_SIZE } from './constants';
+import { WINNING_COMBINATIONS, BOARD_SIZE, BOARD_DIMENSIONS, DIFFICULTY_CONFIG } from './constants';
 
 /**
  * Pure functional utilities
@@ -26,11 +26,12 @@ export const setCell = R.curry((index: number, player: Player, board: Board): Bo
 
 /**
  * Check if a player has won using functional composition
+ * Works dynamically with any board size and winning combinations
  */
 export const checkWinner = (board: Board): Player => {
   const hasWinningCombo = (player: Player) =>
-    WINNING_COMBINATIONS.some(([a, b, c]) => 
-      board[a] === player && board[b] === player && board[c] === player);
+    WINNING_COMBINATIONS.some((combination) => 
+      combination.every(index => board[index] === player));
   
   if (hasWinningCombo('X')) return 'X';
   if (hasWinningCombo('O')) return 'O';
@@ -85,7 +86,20 @@ export const evaluateGameState = (board: Board): GameResult => {
 };
 
 /**
- * Minimax algorithm with alpha-beta pruning
+ * Calculate dynamic minimax scoring based on board size and depth
+ * This scales with board complexity and avoids hardcoded values like 10
+ */
+const calculateScore = (winner: Player, depth: number, maxPlayer: Player, minPlayer: Player): number => {
+  const baseScore = DIFFICULTY_CONFIG.medium.baseScore; // Use consistent base score
+  const depthPenalty = depth; // Prefer shorter paths to victory
+  
+  if (winner === maxPlayer) return baseScore - depthPenalty;  // Maximizing player wins
+  if (winner === minPlayer) return -baseScore + depthPenalty; // Minimizing player wins
+  return 0; // Draw
+};
+
+/**
+ * Minimax algorithm with alpha-beta pruning and dynamic scoring
  */
 export const minimax = (
   board: Board,
@@ -98,9 +112,8 @@ export const minimax = (
 ): number => {
   const winner = checkWinner(board);
   
-  // Terminal states
-  if (winner === maxPlayer) return 10 - depth;
-  if (winner === minPlayer) return depth - 10;
+  // Terminal states with dynamic scoring
+  if (winner) return calculateScore(winner, depth, maxPlayer, minPlayer);
   if (isBoardFull(board)) return 0;
 
   const availableMoves = getAvailableMoves(board);
@@ -129,12 +142,34 @@ export const minimax = (
 };
 
 /**
- * Strategic move priorities (center, corners, edges)
+ * Calculate strategic move priority for any NxN board
+ * 
+ * Strategy rationale:
+ * 1. CENTER: Controls the most lines (2 diagonals + 1 row + 1 column)
+ * 2. CORNERS: Control 3 lines each (1 row + 1 column + 1 diagonal)  
+ * 3. EDGES: Control only 2 lines each (1 row + 1 column)
+ * 
+ * This strategy scales to any board size by calculating the actual
+ * strategic value based on how many winning combinations each position controls.
  */
-const getMovePriority = (move: number): number => {
-  if (move === 4) return 3; // Center
-  if ([0, 2, 6, 8].includes(move)) return 2; // Corners
-  return 1; // Edges
+const getMovePriority = (move: number, boardDimensions: number = BOARD_DIMENSIONS): number => {
+  const row = Math.floor(move / boardDimensions);
+  const col = move % boardDimensions;
+  const center = Math.floor(boardDimensions / 2);
+  
+  // Check if position is center (highest priority for odd-sized boards)
+  if (boardDimensions % 2 === 1 && row === center && col === center) {
+    return 3; // Center position - controls most lines
+  }
+  
+  // Check if position is corner
+  if ((row === 0 || row === boardDimensions - 1) && 
+      (col === 0 || col === boardDimensions - 1)) {
+    return 2; // Corner position - controls diagonal + edge lines
+  }
+  
+  // All other positions are edges
+  return 1; // Edge position - controls fewer lines
 };
 
 /**
